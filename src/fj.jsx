@@ -144,7 +144,7 @@ export default function App() {
   // すでに公開時刻を過ぎた状態で開いた場合：00 00 00 00 を一拍見せてから開幕
   useEffect(() => {
     if (Date.now() >= COUNTDOWN_TARGET) {
-      const t = setTimeout(() => beginOpening(), 1400);
+      const t = setTimeout(() => beginOpening(), 2400);
       return () => clearTimeout(t);
     }
   }, [beginOpening]);
