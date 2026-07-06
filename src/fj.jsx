@@ -200,7 +200,7 @@ export default function App() {
   const startMediaTimer = useCallback(() => {
     if (mediaStartedRef.current) return;
     mediaStartedRef.current = true;
-    const DURATION_MS = 15500; // 映像13.1秒＋遅延吸収バッファ約2.4秒
+    const DURATION_MS = 16500; // 映像13.1秒＋遅延吸収バッファ約3.4秒
     setTimeout(() => finishDarkness(), DURATION_MS);
   }, [finishDarkness]);
 
