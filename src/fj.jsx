@@ -191,7 +191,7 @@ export default function App() {
     endedRef.current = true;
     setShowMedia(false);
     setTimeout(() => setRevealPhase("fadeout"), 700);
-    setTimeout(() => setRevealPhase("idle"), 1700);
+    setTimeout(() => setRevealPhase("idle"), 1300);
   }, []);
 
   // 映像の開始：アニメWebP（13.1秒・音声なし）の読み込み完了から長さぶん待って明ける
@@ -200,7 +200,7 @@ export default function App() {
   const startMediaTimer = useCallback(() => {
     if (mediaStartedRef.current) return;
     mediaStartedRef.current = true;
-    const DURATION_MS = 16500; // 映像13.1秒＋遅延吸収バッファ約3.4秒
+    const DURATION_MS = 16100; // 映像13.1秒＋遅延吸収バッファ約3.0秒
     setTimeout(() => finishDarkness(), DURATION_MS);
   }, [finishDarkness]);
 
