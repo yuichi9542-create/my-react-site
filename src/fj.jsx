@@ -62,7 +62,8 @@ const LINKS = {
 };
 
 // Fade-up on first scroll into view — the quiet, editorial reveal aman.com uses
-function Reveal({ children, style, threshold = 0.12 }) {
+// variant="image": 写真用。わずかに寄った状態から、ゆっくり透けながら定位置に収まる
+function Reveal({ children, style, threshold = 0.12, variant }) {
   const ref = useRef(null);
   const [vis, setVis] = useState(false);
   useEffect(() => {
@@ -76,13 +77,16 @@ function Reveal({ children, style, threshold = 0.12 }) {
     io.observe(el);
     return () => io.disconnect();
   }, [threshold]);
+  const isImage = variant === "image";
   return (
     <div
       ref={ref}
       style={{
         opacity: vis ? 1 : 0,
-        transform: vis ? "none" : "translateY(24px)",
-        transition: "opacity 1s ease, transform 1s ease",
+        transform: vis ? "none" : (isImage ? "scale(1.03)" : "translateY(24px)"),
+        transition: isImage
+          ? "opacity 1.4s ease, transform 2.4s cubic-bezier(0.22, 1, 0.36, 1)"
+          : "opacity 1s ease, transform 1s ease",
         ...style,
       }}
     >
@@ -145,7 +149,7 @@ export default function App() {
   // ※ 公開時刻を過ぎてから開いた場合も、ゼロ表示で一拍おいてから同じ儀式を通る
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [gatePhase, setGatePhase] = useState("waiting");
-  const [gateStep, setGateStep] = useState(0); // 0:通常 1:数字が溶ける 2:It's time. 3:幕が上がる
+  const [gateStep, setGateStep] = useState(0); // 0:通常 1:数字が溶ける 2:Let today be your day. 3:幕が上がる
   const openingRef = useRef(false);
   const remaining = Math.max(0, COUNTDOWN_TARGET - nowMs);
 
@@ -155,7 +159,7 @@ export default function App() {
     openingRef.current = true;
     setGatePhase("opening"); // この時点で本編が幕の下にマウントされる
     setGateStep(1);                                 // 数字と見出しがふわっと溶ける
-    setTimeout(() => setGateStep(2), 1100);         // 静寂に "It's time." が浮かぶ
+    setTimeout(() => setGateStep(2), 1100);         // 静寂に "Let today be your day." が浮かぶ
     setTimeout(() => setGateStep(3), 3600);         // 言葉が消えながら幕が上がる
     setTimeout(() => setGatePhase("open"), 5200);   // 幕を解体
   }, []);
@@ -202,6 +206,33 @@ export default function App() {
     mins:  Math.floor((remaining % 3600000) / 60000),
     secs:  Math.floor((remaining % 60000) / 1000),
   };
+
+  // ナビ下辺の読書進捗ライン（再レンダーを避けるためDOMを直接更新）
+  // ※ gatePhaseの宣言より後に置くこと（前に置くと初期化前アクセスでクラッシュする）
+  const progressBarRef = useRef(null);
+  useEffect(() => {
+    if (gatePhase === "waiting") return;
+    let raf = null;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = null;
+        const el = progressBarRef.current;
+        if (!el) return;
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+        el.style.width = (p * 100).toFixed(2) + "%";
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    onScroll();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [gatePhase, revealed]);
 
   // 映像が終わったら、画面をゆっくり明ける
   const finishDarkness = useCallback(() => {
@@ -305,6 +336,10 @@ export default function App() {
 
   // 暗幕の不透明度：発動前はclip-pathが0%なので見えない。明転時はopacityで抜く
   const overlayOpacity = revealPhase === "dimming" ? 1 : (revealed ? 0 : 1);
+
+  // 幕が明けた瞬間（映像終了→明転開始）。Heroの登場アニメーションはこの瞬間に始める。
+  // マウント時に始めると、暗闇の裏で誰にも見られずに再生し終わってしまうため
+  const stageLit = revealed && revealPhase !== "dimming";
 
   // Hide the scrollbar for the duration of the dark transition, so the
   // behind-the-scenes scroll doesn't show a moving scrollbar track.
@@ -517,10 +552,10 @@ export default function App() {
         /* Hero「For Jun」の両脇の線が中央から外へ引かれる */
         @keyframes amanDrawLine {
           from { width:0;    opacity:0; }
-          to   { width:28px; opacity:1; }
+          to   { width:40px; opacity:1; }
         }
         .amn-drawline {
-          animation: amanDrawLine 0.9s 1.0s ease both;
+          animation: amanDrawLine 0.9s 1.3s ease both;
         }
         /* タイムライン「いま」の灯り */
         @keyframes amanNowGlow {
@@ -639,7 +674,7 @@ export default function App() {
           transition:"opacity 1.2s ease",
           pointerEvents:"none",
         }}>
-          It's time.
+          Let today be your day.
         </p>
       </section>
 
@@ -652,8 +687,18 @@ export default function App() {
       <nav style={s.nav}>
         <span style={s.navTitle}>7月18日（土）</span>
         <span style={{ ...s.navDate, color: revealed ? C.amanAccent : C.stone, transition:"color 1.2s ease" }}>
-          北鎌倉 → {revealed ? "大手町" : "…"}
+          北鎌倉 → {revealed ? "アマン東京" : "…"}
         </span>
+        {/* 読書進捗ライン：スクロールに応じて左から満ちる。リビール後は金に */}
+        <div
+          ref={progressBarRef}
+          style={{
+            position:"absolute", left:0, bottom:-1, height:2, width:"0%",
+            background: revealed ? C.gold : C.moss,
+            transition:"background 1.4s ease",
+            pointerEvents:"none",
+          }}
+        />
       </nav>
 
       {/* ════════════════════════════════════
@@ -738,14 +783,16 @@ export default function App() {
         <div style={{ marginTop:8 }}>
 
           {/* 外観写真 */}
-          <div style={{
-            borderRadius:10, overflow:"hidden", marginBottom:20,
-            background: TERAOKA_ASSETS.img02 ? "none" : C.paperDeep,
-          }}>
-            {TERAOKA_ASSETS.img02 && (
-              <img src={TERAOKA_ASSETS.img02} alt="てんぷら てらおか" style={{ width:"100%", display:"block" }} />
-            )}
-          </div>
+          <Reveal variant="image">
+            <div style={{
+              borderRadius:10, overflow:"hidden", marginBottom:20,
+              background: TERAOKA_ASSETS.img02 ? "none" : C.paperDeep,
+            }}>
+              {TERAOKA_ASSETS.img02 && (
+                <img src={TERAOKA_ASSETS.img02} alt="てんぷら てらおか" style={{ width:"100%", display:"block" }} />
+              )}
+            </div>
+          </Reveal>
 
           {/* 料理長の経歴 */}
           <p style={{ fontSize:14, color:C.inkSoft, lineHeight:1.9, marginBottom:20 }}>
@@ -756,15 +803,17 @@ export default function App() {
             てんぷら てらおかは自然豊かで歴史ある街、北鎌倉に2024年12月オープン。
           </p>
 
-          {/* 店内写真ギャラリー（03〜05） */}
+          {/* 店内写真ギャラリー（03〜05）：一枚ずつ、静かに定位置へ */}
           <div style={{ display:"grid", gridTemplateColumns:"1fr", gap:12, marginBottom:20 }}>
             {[TERAOKA_ASSETS.img03, TERAOKA_ASSETS.img04, TERAOKA_ASSETS.img05].map((src, i) => (
-              <div key={i} style={{
-                aspectRatio:"4 / 3", borderRadius:8, overflow:"hidden",
-                background: src
-                  ? `url(${src}) center / cover no-repeat`
-                  : `linear-gradient(150deg, ${C.paperDeep} 0%, ${C.stoneLight} 100%)`,
-              }}/>
+              <Reveal key={i} variant="image">
+                <div style={{
+                  aspectRatio:"4 / 3", borderRadius:8, overflow:"hidden",
+                  background: src
+                    ? `url(${src}) center / cover no-repeat`
+                    : `linear-gradient(150deg, ${C.paperDeep} 0%, ${C.stoneLight} 100%)`,
+                }}/>
+              </Reveal>
             ))}
           </div>
 
@@ -784,13 +833,15 @@ export default function App() {
           </p>
 
           {/* 内観写真（06） */}
-          <div style={{
-            borderRadius:10, overflow:"hidden", marginBottom:20,
-            aspectRatio:"4 / 3",
-            background: TERAOKA_ASSETS.img06
-              ? `url(${TERAOKA_ASSETS.img06}) center / cover no-repeat`
-              : `linear-gradient(150deg, ${C.paperDeep} 0%, ${C.stoneLight} 100%)`,
-          }}/>
+          <Reveal variant="image">
+            <div style={{
+              borderRadius:10, overflow:"hidden", marginBottom:20,
+              aspectRatio:"4 / 3",
+              background: TERAOKA_ASSETS.img06
+                ? `url(${TERAOKA_ASSETS.img06}) center / cover no-repeat`
+                : `linear-gradient(150deg, ${C.paperDeep} 0%, ${C.stoneLight} 100%)`,
+            }}/>
+          </Reveal>
 
           {/* 結び */}
           <div style={{ width:1, height:36, background:C.stoneLight, margin:"28px auto 24px" }} />
@@ -854,12 +905,14 @@ export default function App() {
                       />
                     </svg>
                   )}
-                  {/* 中心のドット：2秒経過後から、押している深さに応じてゆっくり育つ */}
+                  {/* 中心のドット：2秒経過後から、押している深さに応じてゆっくり育つ。
+                      発動後は金色に灯ったまま残る — ここが開いた扉だった、という小さな記念 */}
                   <div style={{
                     ...s.secretInner,
                     transform:`scale(${1 + fb * 0.9})`,
-                    background: active ? C.cedar : C.stoneLight,
-                    transition:"transform 0.3s ease, background 0.8s ease",
+                    background: revealed ? C.gold : (active ? C.cedar : C.stoneLight),
+                    boxShadow: revealed ? "0 0 8px rgba(178, 141, 87, 0.5)" : "none",
+                    transition:"transform 0.3s ease, background 1.6s ease, box-shadow 1.6s ease",
                   }} />
                 </>
               );
@@ -947,14 +1000,18 @@ export default function App() {
 
             <div /> {/* spacer to push the title block toward vertical center via space-between */}
 
-            <div style={{ position:"relative", zIndex:2, animation:"amanFadeUp 1.1s 0.15s ease both", opacity:0 }}>
-              {/* — For Jun — 両脇にヘアライン */}
-              <div ref={forJunRef} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:14, marginBottom:26 }}>
-                <span className="amn-drawline" style={{ width:28, height:1, background:"rgba(201,164,106,0.55)" }} />
-                <span style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", letterSpacing:"0.32em", fontSize:14, color:C.goldSoft, textTransform:"uppercase", whiteSpace:"nowrap" }}>
+            <div style={{
+              position:"relative", zIndex:2,
+              animation: stageLit ? "amanFadeUp 1.1s 0.3s ease both" : "none",
+              opacity:0,
+            }}>
+              {/* — For Jun — 両脇にヘアライン（幕が明けてから中央→外へ引かれる） */}
+              <div ref={forJunRef} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:16, marginBottom:26 }}>
+                <span className={stageLit ? "amn-drawline" : ""} style={{ width:40, height:2, background:"rgba(201,164,106,0.75)", opacity:0 }} />
+                <span style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontWeight:500, letterSpacing:"0.32em", fontSize:20, color:C.goldSoft, textTransform:"uppercase", whiteSpace:"nowrap" }}>
                   For Jun
                 </span>
-                <span className="amn-drawline" style={{ width:28, height:1, background:"rgba(201,164,106,0.55)" }} />
+                <span className={stageLit ? "amn-drawline" : ""} style={{ width:40, height:2, background:"rgba(201,164,106,0.75)", opacity:0 }} />
               </div>
 
               {/* aman.com の「日本 東京 → アマン東京」の階層を踏襲 */}
@@ -1234,6 +1291,19 @@ export default function App() {
               <p style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontSize:15, color:C.amanAccent, letterSpacing:"0.06em" }}>
                 with love — 7.18.2026
               </p>
+              {/* あとがき：チェックアウト後（7/19 13:00〜）にだけ、静かに現れる */}
+              {clockMs >= Date.parse("2026-07-19T13:00:00+09:00") && (
+                <div style={{ animation:"amanFadeUp 1.6s 0.3s ease both", opacity:0 }}>
+                  <div style={{ width:1, height:32, background:C.amanLine, margin:"36px auto 28px" }} />
+                  <p style={{
+                    fontFamily:"'Shippori Mincho',serif", fontSize:13.5, color:C.inkSoft,
+                    letterSpacing:"0.14em", lineHeight:2.4,
+                  }}>
+                    二日間、ありがとう。<br/>
+                    また次のしおりで。
+                  </p>
+                </div>
+              )}
             </Reveal>
           </footer>
         </>
