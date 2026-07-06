@@ -210,6 +210,55 @@ export default function App() {
   // ナビ下辺の読書進捗ライン（再レンダーを避けるためDOMを直接更新）
   // ※ gatePhaseの宣言より後に置くこと（前に置くと初期化前アクセスでクラッシュする）
   const progressBarRef = useRef(null);
+
+  // 開発者用の隠しコマンド：フッターの「with love — 7.18.2026」を2秒以内の連打で
+  // 7回タップすると、あとがきの発動条件をトグルできる（挙動確認用・見た目の手がかりなし）
+  const [devAfterword, setDevAfterword] = useState(false);
+  const loveTapRef = useRef({ n: 0, t: 0 });
+  const handleLoveTap = useCallback(() => {
+    const t = Date.now();
+    if (t - loveTapRef.current.t > 2000) loveTapRef.current.n = 0;
+    loveTapRef.current.t = t;
+    loveTapRef.current.n += 1;
+    if (loveTapRef.current.n >= 7) {
+      loveTapRef.current.n = 0;
+      setDevAfterword(v => !v);
+    }
+  }, []);
+
+  // ── あとがき ──
+  // 条件が満ちた状態（7/19 12:00以降 or dev）でページ最下端まで来ると、
+  // あとがきがふわりと現れ、そこへ自動でスクロールが導かれる
+  const [afterwordShown, setAfterwordShown] = useState(false);
+  const afterwordArmed = devAfterword || clockMs >= Date.parse("2026-07-19T12:00:00+09:00");
+
+  useEffect(() => {
+    if (!revealed || !afterwordArmed || afterwordShown) return;
+    const onScroll = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      if (max > 0 && window.scrollY >= max - 24) setAfterwordShown(true);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll(); // すでに最下端にいる場合も拾う
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [revealed, afterwordArmed, afterwordShown]);
+
+  // 現れたあとがきへ、静かにスクロールを導く
+  useEffect(() => {
+    if (!afterwordShown) return;
+    const t = setTimeout(() => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      smoothScrollTo(max, 1500);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [afterwordShown]);
+
+  // devトグルを解除したら、再テストできるよう非表示に戻す
+  useEffect(() => {
+    if (!afterwordArmed && afterwordShown) setAfterwordShown(false);
+  }, [afterwordArmed, afterwordShown]);
+
+
   useEffect(() => {
     if (gatePhase === "waiting") return;
     let raf = null;
@@ -475,7 +524,7 @@ export default function App() {
   return (
     <div style={s.root}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;700;800&family=Zen+Kaku+Gothic+New:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;700;800&family=Zen+Kaku+Gothic+New:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Klee+One:wght@400;600&display=swap');
 
         * { box-sizing: border-box; }
 
@@ -687,7 +736,7 @@ export default function App() {
       <nav style={s.nav}>
         <span style={s.navTitle}>7月18日（土）</span>
         <span style={{ ...s.navDate, color: revealed ? C.amanAccent : C.stone, transition:"color 1.2s ease" }}>
-          北鎌倉 → {revealed ? "アマン東京" : "…"}
+          北鎌倉{revealed ? " → アマン東京" : ""}
         </span>
         {/* 読書進捗ライン：スクロールに応じて左から満ちる。リビール後は金に */}
         <div
@@ -1288,19 +1337,26 @@ export default function App() {
                 </span>
               </p>
               <div style={{ width:28, height:1, background:C.amanLine, margin:"32px auto 24px" }} />
-              <p style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontSize:15, color:C.amanAccent, letterSpacing:"0.06em" }}>
+              <p
+                onClick={handleLoveTap}
+                className="amn-tap"
+                style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontSize:15, color:C.amanAccent, letterSpacing:"0.06em", cursor:"default" }}
+              >
                 with love — 7.18.2026
               </p>
-              {/* あとがき：チェックアウト後（7/19 13:00〜）にだけ、静かに現れる */}
-              {clockMs >= Date.parse("2026-07-19T13:00:00+09:00") && (
-                <div style={{ animation:"amanFadeUp 1.6s 0.3s ease both", opacity:0 }}>
+              {/* あとがき：7/19 12:00以降、最下端に到達すると手書きの一筆が浮かび上がる */}
+              {afterwordShown && (
+                <div style={{ animation:"amanFadeUp 1.8s 0.3s ease both", opacity:0 }}>
                   <div style={{ width:1, height:32, background:C.amanLine, margin:"36px auto 28px" }} />
                   <p style={{
-                    fontFamily:"'Shippori Mincho',serif", fontSize:13.5, color:C.inkSoft,
-                    letterSpacing:"0.14em", lineHeight:2.4,
+                    fontFamily:"'Klee One', cursive", fontWeight:400,
+                    fontSize:14.5, color:C.inkSoft,
+                    letterSpacing:"0.1em", lineHeight:2.6,
                   }}>
-                    二日間、ありがとう。<br/>
-                    また次のしおりで。
+                    30歳、おめでとう。<br/>
+                    この2日間は楽しめたかな？<br/>
+                    特別で忘れられない2日間に<br/>
+                    なったことを祈ります。
                   </p>
                 </div>
               )}
