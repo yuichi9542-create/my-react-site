@@ -583,7 +583,7 @@ export default function App() {
             fontFamily:"'Shippori Mincho',serif", fontSize:30, fontWeight:500,
             letterSpacing:"0.1em", color:C.ink, lineHeight:1.6, marginBottom:12,
           }}>
-             Saturday<br/>7/18/2026,10:00～
+             Saturday<br/>7/18/2026, 10:00～
           </h1>
           <p style={{ fontSize:13, color:C.inkSoft, letterSpacing:"0.06em", marginBottom:40 }}>
               
