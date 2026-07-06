@@ -742,8 +742,7 @@ export default function App() {
             fontFamily:"'Shippori Mincho',serif", fontSize:16, color:C.ink,
             letterSpacing:"0.04em", lineHeight:2.2, textAlign:"center", padding:"0 8px",
           }}>
-            大切なお時間を、都会の喧騒をはなれ北鎌倉にて
-            お食事とお話しを楽しむことができます。
+            大切なお時間を、都会の喧騒をはなれ、<br/>北鎌倉にて、お食事とお話しを<br/>お楽しみください。
           </p>
         </div>
       </div>
@@ -904,10 +903,10 @@ export default function App() {
 
               {/* aman.com の「日本 東京 → アマン東京」の階層を踏襲 */}
               <p style={{ fontFamily:"'Zen Kaku Gothic New',sans-serif", fontSize:11, letterSpacing:"0.5em", color:"rgba(245,242,234,0.72)", marginBottom:16, paddingLeft:"0.5em" }}>
-                日本　東京
+                JAPAN · TOKYO
               </p>
               <h2 style={{ fontFamily:"'Shippori Mincho',serif", fontSize:34, fontWeight:500, letterSpacing:"0.08em", color:"#F7F4EC", lineHeight:1.45, marginBottom:16 }}>
-                今夜は、<br/>アマン東京へ。
+                今夜は、<br/>アマン東京で。
               </h2>
               <p style={{ fontFamily:"'Cormorant Garamond',serif", letterSpacing:"0.28em", fontSize:12, color:"rgba(245,242,234,0.60)", textTransform:"uppercase" }}>
                 Aman Tokyo · Otemachi Tower
