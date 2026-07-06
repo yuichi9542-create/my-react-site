@@ -200,7 +200,7 @@ export default function App() {
   const startMediaTimer = useCallback(() => {
     if (mediaStartedRef.current) return;
     mediaStartedRef.current = true;
-    const DURATION_MS = 16500; // 映像13.1秒＋遅延吸収バッファ約3.4秒
+    const DURATION_MS = 15500; // 映像13.1秒＋遅延吸収バッファ約2.4秒
     setTimeout(() => finishDarkness(), DURATION_MS);
   }, [finishDarkness]);
 
@@ -304,6 +304,7 @@ export default function App() {
       fontFamily: "'Zen Kaku Gothic New', sans-serif",
       color: C.ink,
       overflowX: "hidden",
+      textAlign: "left", // ホスト環境(Vite雛形等)のtext-align:center継承を遮断
     },
     nav: {
       position: "fixed", top:0, left:0, right:0, zIndex:50,
@@ -424,6 +425,25 @@ export default function App() {
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;700;800&family=Zen+Kaku+Gothic+New:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap');
 
         * { box-sizing: border-box; }
+
+        /* ── ホスト環境リセット ──
+           Vite/CRA等の雛形CSS（#rootのtext-align:center・max-width・padding、
+           bodyのflex中央配置など）がデザインを崩すのを打ち消す */
+        html, body { margin: 0 !important; padding: 0 !important; }
+        body {
+          display: block !important;
+          place-items: initial !important;
+          min-width: 0 !important;
+          background: #F6F3EA;
+        }
+        #root, #app {
+          max-width: none !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          text-align: left !important;
+          display: block !important;
+        }
 
         .amn-no-scrollbar::-webkit-scrollbar { display: none; }
         .amn-no-scrollbar { -ms-overflow-style: none; }
