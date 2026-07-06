@@ -26,9 +26,10 @@ const C = {
 // ─── Secret trigger config ──────────────────────────────────
 const HOLD_TOTAL_MS = 8000;      // 発動までの長押し時間（5秒＋予感3秒）
 const HOLD_ARC_START_MS = 5000;  // ここから「予感」= 金の弧が描かれはじめる
+const HOLD_FEEDBACK_START_MS = 2000; // ここまでは見た目を一切変えない（バレ防止）
 
 // 公開日時：日本時間 2026年7月18日(土) 9:00（タイムゾーンはオフセットで固定）
-const COUNTDOWN_TARGET = new Date("2026-07-01T09:00:00+09:00").getTime();
+const COUNTDOWN_TARGET = new Date("2026-07-18T09:00:00+09:00").getTime();
 
 // ─── Image assets ────────────────────────────────────────────
 // TODO: 画像をアップロードしたら、それぞれのURL(またはbase64)をここに入れてください。
@@ -144,7 +145,7 @@ export default function App() {
   // すでに公開時刻を過ぎた状態で開いた場合：00 00 00 00 を一拍見せてから開幕
   useEffect(() => {
     if (Date.now() >= COUNTDOWN_TARGET) {
-      const t = setTimeout(() => beginOpening(), 7000);
+      const t = setTimeout(() => beginOpening(), 8000);
       return () => clearTimeout(t);
     }
   }, [beginOpening]);
@@ -237,9 +238,6 @@ export default function App() {
     const x = e && typeof e.clientX === "number" && e.clientX > 0 ? e.clientX : window.innerWidth / 2;
     const y = e && typeof e.clientY === "number" && e.clientY > 0 ? e.clientY : window.innerHeight / 2;
     setRippleOrigin({ x, y });
-
-    // 軽い開始フィードバック（対応端末のみ）
-    if (navigator.vibrate) navigator.vibrate(8);
 
     holdStartRef.current = performance.now();
     milestoneRef.current = false;
@@ -745,42 +743,52 @@ export default function App() {
           title=""
         >
           <div style={s.secretDot}>
-            {/* 前半5秒：押している間、水紋がゆっくり脈打つ */}
-            {holdProgress > 0 && !revealed && (
-              <div
-                style={{
-                  position:"absolute", inset:0, borderRadius:"50%",
-                  border:`1px solid ${C.cedarSoft}`,
-                  animation:"amanPulse 1.8s ease-out infinite",
-                }}
-              />
-            )}
-            {/* 後半5秒：金の弧がゆっくり円を描き、閉じた瞬間に発動する */}
-            {!revealed && holdProgress >= HOLD_ARC_START_MS / HOLD_TOTAL_MS && (
-              <svg
-                width="48" height="48" viewBox="0 0 48 48"
-                style={{ position:"absolute", top:-7, left:-7, transform:"rotate(-90deg)", overflow:"visible", pointerEvents:"none" }}
-              >
-                <circle
-                  cx="24" cy="24" r="22" fill="none"
-                  stroke={C.gold} strokeWidth="1.4" strokeLinecap="round"
-                  strokeDasharray={2 * Math.PI * 22}
-                  strokeDashoffset={
-                    2 * Math.PI * 22 * (1 - Math.min(
-                      (holdProgress - HOLD_ARC_START_MS / HOLD_TOTAL_MS) / (1 - HOLD_ARC_START_MS / HOLD_TOTAL_MS),
-                      1
-                    ))
-                  }
-                />
-              </svg>
-            )}
-            {/* 中心のドット：押している深さに応じてゆっくり育つ */}
-            <div style={{
-              ...s.secretInner,
-              transform:`scale(${1 + holdProgress * 0.9})`,
-              background: holdProgress > 0 ? C.cedar : C.stoneLight,
-              transition:"transform 0.3s ease, background 0.5s ease",
-            }} />
+            {/* 最初の2秒は完全に無反応（バレ防止）。
+                2秒経過後〜5秒：色が深まり、ゆっくり育ち、水紋が脈打つ */}
+            {(() => {
+              const fbStart = HOLD_FEEDBACK_START_MS / HOLD_TOTAL_MS;
+              const fb = Math.max(0, (holdProgress - fbStart) / (1 - fbStart)); // 2秒以降の進捗 0..1
+              const active = holdProgress >= fbStart && !revealed;
+              return (
+                <>
+                  {active && (
+                    <div
+                      style={{
+                        position:"absolute", inset:0, borderRadius:"50%",
+                        border:`1px solid ${C.cedarSoft}`,
+                        animation:"amanPulse 1.8s ease-out infinite",
+                      }}
+                    />
+                  )}
+                  {/* 後半3秒：金の弧がゆっくり円を描き、閉じた瞬間に発動する */}
+                  {!revealed && holdProgress >= HOLD_ARC_START_MS / HOLD_TOTAL_MS && (
+                    <svg
+                      width="48" height="48" viewBox="0 0 48 48"
+                      style={{ position:"absolute", top:-7, left:-7, transform:"rotate(-90deg)", overflow:"visible", pointerEvents:"none" }}
+                    >
+                      <circle
+                        cx="24" cy="24" r="22" fill="none"
+                        stroke={C.gold} strokeWidth="1.4" strokeLinecap="round"
+                        strokeDasharray={2 * Math.PI * 22}
+                        strokeDashoffset={
+                          2 * Math.PI * 22 * (1 - Math.min(
+                            (holdProgress - HOLD_ARC_START_MS / HOLD_TOTAL_MS) / (1 - HOLD_ARC_START_MS / HOLD_TOTAL_MS),
+                            1
+                          ))
+                        }
+                      />
+                    </svg>
+                  )}
+                  {/* 中心のドット：2秒経過後から、押している深さに応じてゆっくり育つ */}
+                  <div style={{
+                    ...s.secretInner,
+                    transform:`scale(${1 + fb * 0.9})`,
+                    background: active ? C.cedar : C.stoneLight,
+                    transition:"transform 0.3s ease, background 0.8s ease",
+                  }} />
+                </>
+              );
+            })()}
           </div>
           <div style={{ width:1, height:20, background:C.stoneLight, margin:"10px auto 0" }} />
         </div>
