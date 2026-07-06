@@ -483,7 +483,7 @@ export default function App() {
           fontFamily:"'Shippori Mincho',serif", fontSize:30, fontWeight:500,
           letterSpacing:"0.1em", color:C.ink, lineHeight:1.6, marginBottom:12,
         }}>
-           Saturday, 7/18/2026, 9:00 AM ～
+           Saturday,<br/>7/18/2026,<br/>9:00 AM ～
         </h1>
         <p style={{ fontSize:13, color:C.inkSoft, letterSpacing:"0.06em", marginBottom:40 }}>
             
@@ -493,10 +493,10 @@ export default function App() {
         {/* カウントダウン本体 */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:18, maxWidth:360, width:"100%" }}>
           {[
-            { v: cd.days,  label:"日" },
-            { v: cd.hours, label:"時間" },
-            { v: cd.mins,  label:"分" },
-            { v: cd.secs,  label:"秒" },
+            { v: cd.days,  label:"days" },
+            { v: cd.hours, label:"hours" },
+            { v: cd.mins,  label:"mins" },
+            { v: cd.secs,  label:"secs" },
           ].map((u, i) => (
             <div key={i}>
               <p style={{
