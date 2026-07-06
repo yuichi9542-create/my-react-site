@@ -483,9 +483,11 @@ export default function App() {
           fontFamily:"'Shippori Mincho',serif", fontSize:30, fontWeight:500,
           letterSpacing:"0.1em", color:C.ink, lineHeight:1.6, marginBottom:12,
         }}>
-          7月18日 土曜日 9:00～
+           Saturday, 7/18/2026, 9:00 AM ～
         </h1>
-
+        <p style={{ fontSize:13, color:C.inkSoft, letterSpacing:"0.06em", marginBottom:40 }}>
+            
+        </p>
         <div style={{ width:1, height:36, background:C.stoneLight, marginBottom:40 }} />
 
         {/* カウントダウン本体 */}
