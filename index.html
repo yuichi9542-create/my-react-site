@@ -1,10 +1,24 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>my-react-site</title>
+    <title>本日のしおり</title>
+
+    <!-- スマホのブラウザUI（アドレスバー周り）をアプリの紙色に馴染ませる -->
+    <meta name="theme-color" content="#F6F3EA" />
+
+    <!-- 検索エンジンに拾われないように -->
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- URLを共有したときのプレビューカードを無害な内容に固定（ネタバレ防止） -->
+    <meta property="og:title" content="本日のしおり" />
+    <meta property="og:description" content="7.18 SAT" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="本日のしおり" />
+    <meta name="twitter:description" content="7.18 SAT" />
   </head>
   <body>
     <div id="root"></div>
