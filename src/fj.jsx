@@ -121,6 +121,15 @@ export default function App() {
   const mediaStartedRef = useRef(false);
   const amanHeroRef = useRef(null);
   const forJunRef = useRef(null);
+  const amenityRefs = useRef([]); // 館内でのひととき：各カードへの参照（0:Spa 1:ARVA 2:Lounge）
+
+  // タイムラインの施設名タップ → 対応するカードの画像が画面上部に来る位置へスクロール
+  const scrollToAmenity = useCallback((idx) => {
+    const el = amenityRefs.current[idx];
+    if (!el) return;
+    const y = el.getBoundingClientRect().top + window.scrollY - 60; // 固定ナビの高さぶん下げる
+    smoothScrollTo(y, 1100);
+  }, []);
 
   // ── カウントダウンゲート ──
   // gatePhase: waiting(カウントダウン中) | opening(開幕の儀式) | open(解体済み)
@@ -953,9 +962,9 @@ export default function App() {
               <div style={{ position:"relative", paddingLeft:32 }}>
                 {[
                   { time:"15:00", title:"チェックイン", desc:"大手町タワー上層階のロビー「水庭」へ。竹林と水面が広がる静謐な空間でお出迎え。" },
-                  { time:"16:00", title:"Aman Spa & Pool", desc:"室内プールに浮かべば、東京にいることをしばし忘れる。日頃の疲れをそっと解いていく時間。" },
-                  { time:"18:30", title:"ARVA", desc:"アマン東京のイタリアンレストランで、上質な食材と丁寧な仕事を味わう夜。" },
-                  { time:"21:00", title:"The Lounge by Aman", desc:"水庭を望むラウンジで、静かな余韻とともに一杯を。" },
+                  { time:"16:00", title:"Aman Spa & Pool", amenity:0, desc:"室内プールに浮かべば、東京にいることをしばし忘れる。日頃の疲れをそっと癒す。" },
+                  { time:"18:30", title:"ARVA", amenity:1, desc:"アマン東京のイタリアンレストランで、上質な食材と丁寧な仕事を味わう夜。" },
+                  { time:"21:00", title:"The Lounge by Aman", amenity:2, desc:"水庭を望むラウンジで、静かな余韻とともに一杯を。" },
                   { time:"08:00", title:"朝食", desc:"翌朝、光の差し込むダイニングで贅沢な朝時間を。" },
                   { time:"12:00", title:"チェックアウト", desc:"水庭を通り抜けて、静けさを胸にホテルを後に。" },
                 ].map((step, i, arr) => (
@@ -975,9 +984,28 @@ export default function App() {
                     <p style={{ fontFamily:"'Cormorant Garamond',serif", letterSpacing:"0.26em", fontSize:12.5, color:C.amanAccent, marginBottom:4 }}>
                       {step.time}
                     </p>
-                    <p style={{ fontFamily:"'Shippori Mincho',serif", fontSize:17.5, fontWeight:500, letterSpacing:"0.05em", color:C.amanInk, marginBottom:6 }}>
-                      {step.title}
-                    </p>
+                    {step.amenity !== undefined ? (
+                      <p
+                        onClick={() => scrollToAmenity(step.amenity)}
+                        className="amn-tap"
+                        style={{
+                          fontFamily:"'Shippori Mincho',serif", fontSize:17.5, fontWeight:500,
+                          letterSpacing:"0.05em", color:C.amanInk, marginBottom:6,
+                          display:"inline-flex", alignItems:"baseline", gap:7,
+                          borderBottom:`1px solid ${C.amanLine}`, paddingBottom:3,
+                          cursor:"pointer",
+                        }}
+                      >
+                        {step.title}
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style={{ flexShrink:0, transform:"translateY(1px)" }}>
+                          <path d="M12 4v15M12 19l-6-6M12 19l6-6" stroke={C.amanAccent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </p>
+                    ) : (
+                      <p style={{ fontFamily:"'Shippori Mincho',serif", fontSize:17.5, fontWeight:500, letterSpacing:"0.05em", color:C.amanInk, marginBottom:6 }}>
+                        {step.title}
+                      </p>
+                    )}
                     <p style={{ fontSize:13, color:C.inkSoft, lineHeight:1.9, letterSpacing:"0.02em" }}>
                       {step.desc}
                     </p>
@@ -1014,7 +1042,7 @@ export default function App() {
                   },
                 ].map((a, i) => (
                   <Reveal key={i}>
-                    <div>
+                    <div ref={(el) => { amenityRefs.current[i] = el; }}>
                       <div
                         style={{
                           aspectRatio:"4 / 3",
