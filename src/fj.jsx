@@ -111,17 +111,40 @@ function smoothScrollTo(targetY, duration = 1600) {
   requestAnimationFrame(step);
 }
 
+// ── 進行状態の永続化 ──
+// リロードやタブ再読込で儀式が振り出しに戻らないよう、開いた扉を記憶する。
+// artifacts等 localStorage が使えない環境では静かに無効化される（try/catch）
+const PERSIST_GATE   = "shiori.gateOpened";
+const PERSIST_REVEAL = "shiori.revealed";
+function readFlag(key) {
+  try { return window.localStorage.getItem(key) === "1"; } catch (err) { return false; }
+}
+function saveFlag(key) {
+  try { window.localStorage.setItem(key, "1"); } catch (err) {}
+}
+function clearFlags() {
+  try {
+    window.localStorage.removeItem(PERSIST_GATE);
+    window.localStorage.removeItem(PERSIST_REVEAL);
+  } catch (err) {}
+}
+
 export default function App() {
+  // 保存済みの進行状態（初回レンダー時に一度だけ読む）
+  const [persistedReveal] = useState(() => readFlag(PERSIST_REVEAL));
+  const [persistedGate]   = useState(() => readFlag(PERSIST_GATE));
+
   const [holdProgress, setHoldProgress] = useState(0); // 0..1（10秒で1）
-  const [revealed, setRevealed]       = useState(false);
+  const [revealed, setRevealed]       = useState(persistedReveal);
   const [revealPhase, setRevealPhase] = useState("idle"); // idle | dimming | fadeout
   const [showMedia, setShowMedia]     = useState(false);  // 暗闇の中の映像（アニメWebP＋音声）
   const [rippleOrigin, setRippleOrigin] = useState(null); // 水紋の中心（押している指の位置）
   const rafRef       = useRef(null);
   const holdStartRef = useRef(0);
   const milestoneRef = useRef(false); // 5秒地点の合図を一度だけ
-  const firedRef     = useRef(false);
-  const endedRef     = useRef(false); // 終了処理の二重実行ガード
+  const firedRef     = useRef(persistedReveal);
+  const endedRef     = useRef(persistedReveal); // 終了処理の二重実行ガード
+  const restoredRef  = useRef(persistedReveal); // 復元起動（暗転演出・自動スクロールをスキップ）
   const mediaStartedRef = useRef(false);
   const amanHeroRef = useRef(null);
   const forJunRef = useRef(null);
@@ -148,15 +171,16 @@ export default function App() {
   // gatePhase: waiting(カウントダウン中) | opening(開幕の儀式) | open(解体済み)
   // ※ 公開時刻を過ぎてから開いた場合も、ゼロ表示で一拍おいてから同じ儀式を通る
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [gatePhase, setGatePhase] = useState("waiting");
+  const [gatePhase, setGatePhase] = useState(() => (persistedGate || persistedReveal) ? "open" : "waiting");
   const [gateStep, setGateStep] = useState(0); // 0:通常 1:数字が溶ける 2:Let today be your day. 3:幕が上がる
-  const openingRef = useRef(false);
+  const openingRef = useRef(persistedGate || persistedReveal);
   const remaining = Math.max(0, COUNTDOWN_TARGET - nowMs);
 
   // 開幕の儀式：数字が消える → 一言 → 幕がゆっくり透けて、下のページが現れる
   const beginOpening = useCallback(() => {
     if (openingRef.current) return;
     openingRef.current = true;
+    saveFlag(PERSIST_GATE); // 開いた扉を記憶（リロードしても儀式はやり直さない）
     setGatePhase("opening"); // この時点で本編が幕の下にマウントされる
     setGateStep(1);                                 // 数字と見出しがふわっと溶ける
     setTimeout(() => setGateStep(2), 1100);         // 静寂に "Let today be your day." が浮かぶ
@@ -226,6 +250,21 @@ export default function App() {
     }
   }, []);
 
+  // 開発者用の隠しコマンド：ナビの「7月18日（土）」を2秒以内の連打で7回タップすると、
+  // 記憶した進行状態（ゲート・リビール）を消去してリロードする（振り出しからの再確認用）
+  const navTapRef = useRef({ n: 0, t: 0 });
+  const handleNavTap = useCallback(() => {
+    const t = Date.now();
+    if (t - navTapRef.current.t > 2000) navTapRef.current.n = 0;
+    navTapRef.current.t = t;
+    navTapRef.current.n += 1;
+    if (navTapRef.current.n >= 7) {
+      navTapRef.current.n = 0;
+      clearFlags();
+      window.location.reload();
+    }
+  }, []);
+
   // ── あとがき ──
   // 条件が満ちた状態（7/19 12:00以降 or dev）でページ最下端まで来ると、
   // あとがきがふわりと現れ、そこへ自動でスクロールが導かれる
@@ -234,13 +273,26 @@ export default function App() {
 
   useEffect(() => {
     if (!revealed || !afterwordArmed || afterwordShown) return;
+    // 最下端に到達しても、すぐには出さない。
+    // 「ページはここで終わり」と一瞬信じさせる静止（1.1秒）を挟んでから、
+    // あとがきが現れる。静止中にスクロールが離れたら仕切り直し
+    let timer = null;
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
-      if (max > 0 && window.scrollY >= max - 24) setAfterwordShown(true);
+      const atBottom = max > 0 && window.scrollY >= max - 24;
+      if (atBottom) {
+        if (!timer) timer = setTimeout(() => setAfterwordShown(true), 1100);
+      } else if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll(); // すでに最下端にいる場合も拾う
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (timer) clearTimeout(timer);
+    };
   }, [revealed, afterwordArmed, afterwordShown]);
 
   // 現れたあとがきへ、静かにスクロールを導く
@@ -249,7 +301,7 @@ export default function App() {
     const t = setTimeout(() => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
       smoothScrollTo(max, 1500);
-    }, 400);
+    }, 250);
     return () => clearTimeout(t);
   }, [afterwordShown]);
 
@@ -306,6 +358,7 @@ export default function App() {
   const triggerReveal = useCallback(() => {
     if (firedRef.current) return;
     firedRef.current = true;
+    saveFlag(PERSIST_REVEAL); // 開いた扉を記憶（リロードしても長押しはやり直さない）
 
     // お祝いムードの振動パターン
     if (navigator.vibrate) navigator.vibrate([30, 40, 30, 40, 100]);
@@ -374,6 +427,7 @@ export default function App() {
   // this is what makes the scroll happen while the screen is still dark.
   useEffect(() => {
     if (!revealed) return;
+    if (restoredRef.current) return; // 復元起動では暗転中の自動スクロールは不要
     const el = amanHeroRef.current;
     if (el) {
       const NAV_OFFSET = 64; // fixed nav height + breathing room
@@ -734,7 +788,7 @@ export default function App() {
 
       {/* ── NAV ── */}
       <nav style={s.nav}>
-        <span style={s.navTitle}>7月18日（土）</span>
+        <span onClick={handleNavTap} className="amn-tap" style={{ ...s.navTitle, cursor:"default" }}>7月18日（土）</span>
         <span style={{ ...s.navDate, color: revealed ? C.amanAccent : C.stone, transition:"color 1.2s ease" }}>
           北鎌倉{revealed ? " → アマン東京" : ""}
         </span>
