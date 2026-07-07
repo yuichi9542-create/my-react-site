@@ -482,6 +482,18 @@ export default function App() {
   // マウント時に始めると、暗闇の裏で誰にも見られずに再生し終わってしまうため
   const stageLit = revealed && revealPhase !== "dimming";
 
+  // ── Hero登場の四拍 ──
+  // 0: 写真がはっきり見える → 1: 背景がゆっくり暗くなる → 2: For Jun → 3: タイトルが浮かび上がる
+  const [heroStage, setHeroStage] = useState(0);
+  useEffect(() => {
+    if (!stageLit) return;
+    if (restoredRef.current) { setHeroStage(3); return; } // 復元起動では組み上がった状態で
+    const t1 = setTimeout(() => setHeroStage(1), 2000);
+    const t2 = setTimeout(() => setHeroStage(2), 3400);
+    const t3 = setTimeout(() => setHeroStage(3), 4800);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [stageLit]);
+
   // Hide the scrollbar for the duration of the dark transition, so the
   // behind-the-scenes scroll doesn't show a moving scrollbar track.
   useEffect(() => {
@@ -702,7 +714,7 @@ export default function App() {
           to   { width:40px; opacity:1; }
         }
         .amn-drawline {
-          animation: amanDrawLine 0.9s 1.3s ease both;
+          animation: amanDrawLine 0.9s 0.15s ease both;
         }
         /* タイムライン「いま」の灯り */
         @keyframes amanNowGlow {
@@ -1149,29 +1161,39 @@ export default function App() {
               textAlign:"center", position:"relative", overflow:"hidden",
             }}
           >
-            {/* 写真の上に薄く重ねて文字を読みやすくするグラデーション */}
+            {/* 写真の上のグラデーション：明転直後は写真をはっきり見せ、
+                ひと呼吸おいてからゆっくり暗くなる（Hero登場の第一拍→第二拍） */}
             <div style={{
               position:"absolute", inset:0,
               background:"linear-gradient(180deg, rgba(10,9,6,0.80) 0%, rgba(10,9,6,0.42) 45%, rgba(10,9,6,0.90) 100%)",
+              opacity: heroStage >= 1 ? 1 : 0,
+              transition:"opacity 1.8s ease",
               zIndex:0,
             }}/>
 
             <div /> {/* spacer to push the title block toward vertical center via space-between */}
 
-            <div style={{
-              position:"relative", zIndex:2,
-              animation: stageLit ? "amanFadeUp 1.1s 0.3s ease both" : "none",
-              opacity:0,
-            }}>
-              {/* — For Jun — 両脇にヘアライン（幕が明けてから中央→外へ引かれる） */}
+            <div style={{ position:"relative", zIndex:2 }}>
+              {/* 第三拍 — For Jun（両脇の線が中央から外へ引かれる） */}
               <div ref={forJunRef} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:16, marginBottom:26 }}>
-                <span className={stageLit ? "amn-drawline" : ""} style={{ width:40, height:2, background:"rgba(201,164,106,0.75)", opacity:0 }} />
-                <span style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontWeight:500, letterSpacing:"0.32em", fontSize:20, color:C.goldSoft, textTransform:"uppercase", whiteSpace:"nowrap" }}>
+                <span className={heroStage >= 2 ? "amn-drawline" : ""} style={{ width:40, height:2, background:"rgba(201,164,106,0.75)", opacity:0 }} />
+                <span style={{
+                  fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontWeight:500,
+                  letterSpacing:"0.32em", fontSize:20, color:C.goldSoft, whiteSpace:"nowrap",
+                  opacity: heroStage >= 2 ? 1 : 0,
+                  transition:"opacity 1.2s ease",
+                }}>
                   For Jun
                 </span>
-                <span className={stageLit ? "amn-drawline" : ""} style={{ width:40, height:2, background:"rgba(201,164,106,0.75)", opacity:0 }} />
+                <span className={heroStage >= 2 ? "amn-drawline" : ""} style={{ width:40, height:2, background:"rgba(201,164,106,0.75)", opacity:0 }} />
               </div>
 
+              {/* 第四拍 — タイトル一式が浮かび上がる */}
+              <div style={{
+                opacity: heroStage >= 3 ? 1 : 0,
+                transform: heroStage >= 3 ? "none" : "translateY(22px)",
+                transition:"opacity 1.3s ease, transform 1.3s ease",
+              }}>
               {/* aman.com の「日本 東京 → アマン東京」の階層を踏襲 */}
               <p style={{ fontFamily:"'Zen Kaku Gothic New',sans-serif", fontSize:11, letterSpacing:"0.5em", color:"rgba(245,242,234,0.72)", marginBottom:16, paddingLeft:"0.5em" }}>
                 JAPAN · TOKYO
@@ -1182,6 +1204,7 @@ export default function App() {
               <p style={{ fontFamily:"'Cormorant Garamond',serif", letterSpacing:"0.28em", fontSize:12, color:"rgba(245,242,234,0.60)", textTransform:"uppercase" }}>
                 Aman Tokyo · Otemachi Tower
               </p>
+              </div>
             </div>
 
             {/* スクロール誘導 */}
