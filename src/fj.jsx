@@ -13,6 +13,12 @@ const C = {
   mossLight:   "#3D5036",
   cedar:       "#7A4E2D",
   cedarSoft:   "#B07A50",
+  // Kitakamakura area: 苔と杉の気配をまとう、緑がかった紙（アマンの暖色紙と区別する基調）
+  kamaBase:    "#F0F2E6",
+  kamaDeep:    "#E1E5CF",
+  kamaLine:    "#D7DCC2",
+  kamaStone:   "#B7BFA0",
+  kamaSage:    "#CBD6B7",
   gold:        "#A8804A",
   goldSoft:    "#C9A46A",
   goldPale:    "#F0DDB3",
@@ -612,8 +618,10 @@ export default function App() {
       display:"flex", alignItems:"center", justifyContent:"space-between",
       padding:"14px 24px",
       backdropFilter:"blur(12px)",
-      backgroundColor:"rgba(245,242,234,0.80)",
-      borderBottom:`1px solid ${C.stoneLight}`,
+      // リビール前は北鎌倉の緑がかった紙、後はアマンの暖色紙へ（進捗バー・日付色と同じ遷移の流儀）
+      backgroundColor: revealed ? "rgba(245,242,234,0.80)" : "rgba(240,242,229,0.82)",
+      borderBottom:`1px solid ${revealed ? C.stoneLight : C.kamaStone}`,
+      transition:"background-color 1.4s ease, border-color 1.4s ease",
     },
     navTitle: { fontFamily:"'Shippori Mincho',serif", fontSize:14, letterSpacing:"0.18em", color:C.ink },
     navDate:  { fontFamily:"'Cormorant Garamond',serif", fontStyle:"italic", fontSize:15, color:C.stone },
@@ -627,16 +635,16 @@ export default function App() {
     },
     heroEyebrow: {
       fontFamily:"'Cormorant Garamond',serif", letterSpacing:"0.35em",
-      fontSize:11, color:C.goldSoft, marginBottom:16, textTransform:"uppercase",
+      fontSize:11, color:C.kamaSage, marginBottom:16, textTransform:"uppercase",
     },
     heroTitle: {
       fontFamily:"'Shippori Mincho',serif", fontSize:36, fontWeight:600,
       letterSpacing:"0.06em", color:C.paper, lineHeight:1.45, marginBottom:14,
     },
     heroBadge: {
-      display:"inline-block", border:`1px solid rgba(200,180,100,0.4)`,
+      display:"inline-block", border:`1px solid rgba(216,226,190,0.42)`,
       borderRadius:2, padding:"4px 14px", fontSize:12,
-      color:C.goldPale, letterSpacing:"0.15em",
+      color:"#E9EFDA", letterSpacing:"0.15em",
       fontFamily:"'Cormorant Garamond',serif", marginBottom:36,
     },
     heroLeaf: { position:"absolute", opacity:0.04, fontSize:220, top:-30, right:-40, userSelect:"none" },
@@ -681,13 +689,13 @@ export default function App() {
     },
     secretDot: {
       width:36, height:36, borderRadius:"50%",
-      border:`1px solid ${C.stoneLight}`,
+      border:`1px solid ${C.kamaStone}`,
       display:"flex", alignItems:"center", justifyContent:"center",
       position:"relative",
     },
     secretInner: {
       width:8, height:8, borderRadius:"50%",
-      background:C.stoneLight,
+      background:C.kamaStone,
       transition:"transform 0.15s",
     },
 
@@ -990,7 +998,7 @@ export default function App() {
           <div key={i} style={{
             position:"absolute",
             width:i*120, height:i*120,
-            border:"1px solid rgba(200,180,100,0.12)",
+            border:"1px solid rgba(228,236,204,0.14)",
             borderRadius:"50%",
             top:"50%", left:"50%",
             transform:"translate(-50%,-50%)",
@@ -999,6 +1007,8 @@ export default function App() {
         ))}
       </section>
 
+      {/* ── てらおか領域の基調 ── 緑がかった紙で、アマンの暖色紙(#F3EEE7)と世界を分ける */}
+      <div style={{ background:C.kamaBase }}>
       <div style={s.section}>
         {/* 店舗情報 — 枠を捨て、余白とヘアラインで組む編集レイアウト */}
         <div style={{ marginBottom:32 }}>
@@ -1031,8 +1041,8 @@ export default function App() {
               <div key={i} style={{
                 display:"flex", gap:18, alignItems:"baseline",
                 padding:"15px 2px",
-                borderTop:`1px solid ${C.paperDeep}`,
-                borderBottom: i === arr.length - 1 ? `1px solid ${C.paperDeep}` : "none",
+                borderTop:`1px solid ${C.kamaDeep}`,
+                borderBottom: i === arr.length - 1 ? `1px solid ${C.kamaDeep}` : "none",
               }}>
                 <span style={{
                   fontFamily:"'Shippori Mincho',serif", fontSize:12, letterSpacing:"0.22em",
@@ -1102,7 +1112,7 @@ export default function App() {
           <Reveal variant="image">
             <div style={{
               borderRadius:10, overflow:"hidden", marginBottom:20,
-              background: TERAOKA_ASSETS.img02 ? "none" : C.paperDeep,
+              background: TERAOKA_ASSETS.img02 ? "none" : C.kamaDeep,
             }}>
               {TERAOKA_ASSETS.img02 && (
                 <img src={TERAOKA_ASSETS.img02} alt="てんぷら てらおか" style={{ width:"100%", display:"block" }} />
@@ -1127,7 +1137,7 @@ export default function App() {
                   aspectRatio:"4 / 3", borderRadius:8, overflow:"hidden",
                   background: src
                     ? `url(${src}) center / cover no-repeat`
-                    : `linear-gradient(150deg, ${C.paperDeep} 0%, ${C.stoneLight} 100%)`,
+                    : `linear-gradient(150deg, ${C.kamaDeep} 0%, ${C.kamaStone} 100%)`,
                 }}/>
               </Reveal>
             ))}
@@ -1155,12 +1165,12 @@ export default function App() {
               aspectRatio:"4 / 3",
               background: TERAOKA_ASSETS.img06
                 ? `url(${TERAOKA_ASSETS.img06}) center / cover no-repeat`
-                : `linear-gradient(150deg, ${C.paperDeep} 0%, ${C.stoneLight} 100%)`,
+                : `linear-gradient(150deg, ${C.kamaDeep} 0%, ${C.kamaStone} 100%)`,
             }}/>
           </Reveal>
 
           {/* 結び */}
-          <div style={{ width:1, height:36, background:C.stoneLight, margin:"28px auto 24px" }} />
+          <div style={{ width:1, height:36, background:C.kamaStone, margin:"28px auto 24px" }} />
           <p style={{
             fontFamily:"'Shippori Mincho',serif", fontSize:16, color:C.ink,
             letterSpacing:"0.04em", lineHeight:2.2, textAlign:"center", padding:"0 8px",
@@ -1175,7 +1185,7 @@ export default function App() {
 
       {/* ── Divider + SECRET TRIGGER（10秒長押し） ── */}
       <div style={{ textAlign:"center", padding:"8px 0 0" }}>
-        <div style={{ width:40, height:1, background:C.stoneLight, margin:"0 auto 24px" }} />
+        <div style={{ width:40, height:1, background:C.kamaStone, margin:"0 auto 24px" }} />
         <div
           onPointerDown={startHold}
           onPointerUp={cancelHold}
@@ -1229,7 +1239,7 @@ export default function App() {
                   <div style={{
                     ...s.secretInner,
                     transform:`scale(${1 + fb * 0.9})`,
-                    background: revealed ? C.gold : (active ? C.cedar : C.stoneLight),
+                    background: revealed ? C.gold : (active ? C.cedar : C.kamaStone),
                     boxShadow: revealed ? "0 0 8px rgba(178, 141, 87, 0.5)" : "none",
                     transition:"transform 0.3s ease, background 1.6s ease, box-shadow 1.6s ease",
                   }} />
@@ -1237,8 +1247,10 @@ export default function App() {
               );
             })()}
           </div>
-          <div style={{ width:1, height:20, background:C.stoneLight, margin:"10px auto 0" }} />
+          <div style={{ width:1, height:20, background:C.kamaStone, margin:"10px auto 0" }} />
         </div>
+      </div>
+
       </div>
 
       {/* ── 水紋トランジション：最後のタップ位置から暗い波紋が広がり、
