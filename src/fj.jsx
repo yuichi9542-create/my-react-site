@@ -1205,6 +1205,7 @@ export default function App() {
           <Reveal variant="image">
             <div style={{
               borderRadius:10, overflow:"hidden", marginBottom:20,
+              boxShadow:"0 2px 6px rgba(20,18,12,0.06), 0 14px 32px rgba(20,18,12,0.12)",
               background: TERAOKA_ASSETS.img02 ? "none" : C.kamaDeep,
             }}>
               {TERAOKA_ASSETS.img02 && (
@@ -1228,6 +1229,7 @@ export default function App() {
               <Reveal key={i} variant="image">
                 <div style={{
                   aspectRatio:"4 / 3", borderRadius:8, overflow:"hidden",
+                  boxShadow:"0 2px 6px rgba(20,18,12,0.06), 0 14px 32px rgba(20,18,12,0.12)",
                   background: src
                     ? `url(${src}) center / cover no-repeat`
                     : `linear-gradient(150deg, ${C.kamaDeep} 0%, ${C.kamaStone} 100%)`,
@@ -1256,6 +1258,7 @@ export default function App() {
             <div style={{
               borderRadius:10, overflow:"hidden", marginBottom:20,
               aspectRatio:"4 / 3",
+              boxShadow:"0 2px 6px rgba(20,18,12,0.06), 0 14px 32px rgba(20,18,12,0.12)",
               background: TERAOKA_ASSETS.img06
                 ? `url(${TERAOKA_ASSETS.img06}) center / cover no-repeat`
                 : `linear-gradient(150deg, ${C.kamaDeep} 0%, ${C.kamaStone} 100%)`,
@@ -1611,6 +1614,7 @@ export default function App() {
                           overflow:"hidden",
                           position:"relative",
                           marginBottom:22,
+                          boxShadow:"0 2px 6px rgba(20,18,12,0.06), 0 14px 32px rgba(20,18,12,0.12)",
                         }}
                       >
                         {/* ゆっくり呼吸するように寄って引く（Ken Burns） */}
