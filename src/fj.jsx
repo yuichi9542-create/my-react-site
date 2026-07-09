@@ -1160,6 +1160,7 @@ export default function App() {
                 padding:"12px 10px",
                 border:"1px solid rgba(46, 59, 42, 0.40)",
                 borderRadius:2,
+                boxShadow:"0 1px 1px rgba(26,24,16,0.05), 0 4px 10px rgba(46,59,42,0.10)",
                 fontSize:12, letterSpacing:"0.16em", color:C.moss,
                 textDecoration:"none",
               }}
@@ -1179,6 +1180,7 @@ export default function App() {
                 padding:"12px 10px",
                 border:"1px solid rgba(46, 59, 42, 0.40)",
                 borderRadius:2,
+                boxShadow:"0 1px 1px rgba(26,24,16,0.05), 0 4px 10px rgba(46,59,42,0.10)",
                 fontSize:12, letterSpacing:"0.16em", color:C.moss,
                 textDecoration:"none",
               }}
