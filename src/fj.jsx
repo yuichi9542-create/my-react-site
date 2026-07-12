@@ -1218,7 +1218,7 @@ export default function App() {
           <p style={{ fontSize:14, color:C.inkSoft, lineHeight:1.9, marginBottom:20, textIndent:"1em", textAlign:"justify" }}>
             2017年に設計をされたGINZA SIXの「てんぷら山の上」の料理長をつとめ、
             旧ヒルトップホテルお茶の水本店、六本木ミッドタウンの料理長を経て独立。
-            食べログでTOP500を獲得する名店です。
+            食べログでTOP500を獲得する名店です。（※2026年7月1日時点）
             <br/><br/>
             てんぷら てらおかは自然豊かで歴史ある街、北鎌倉に2024年12月オープン。
           </p>
