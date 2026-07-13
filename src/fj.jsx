@@ -1029,7 +1029,15 @@ export default function App() {
       <nav style={s.nav}>
         <span onClick={handleNavTap} className="amn-tap" style={{ ...s.navTitle, cursor:"default" }}>{clockMs >= Date.parse("2026-07-19T00:00:00+09:00") ? "7月19日（日）" : "7月18日（土）"}</span>
         <span style={{ ...s.navDate, color: revealed ? C.amanAccent : C.stone, transition:"color 1.2s ease" }}>
-          北鎌倉{revealed ? " → アマン東京" : ""}
+          北鎌倉
+          {/* ネタバレ防止：明転直後には出さず、Heroタイトル（第四拍）と同時に浮かび上がる。
+              文字列自体はrevealed時点で置いて幅を確定させ（明転はまだ暗幕の裏）、
+              第四拍で透明度だけを上げるので、後からのレイアウト跳ねが起きない */}
+          {revealed && (
+            <span style={{ opacity: heroStage >= 3 ? 1 : 0, transition:"opacity 1.3s ease" }}>
+              {" → アマン東京"}
+            </span>
+          )}
         </span>
         {/* 読書進捗ライン：スクロールに応じて左から満ちる。リビール後は金に */}
         <div
@@ -1424,6 +1432,10 @@ export default function App() {
               padding:"56px 24px 36px",
               display:"flex", flexDirection:"column", justifyContent:"space-between",
               textAlign:"center", position:"relative", overflow:"hidden",
+              // フルブリード：ホスト側CSS（index.css等）が祖先に padding / max-width を
+              // 差し込んでいても、背景写真が必ず画面の左右端まで届くようにする。
+              // 親がすでに全幅なら 50% と -50vw が相殺され、位置は変わらない。
+              width:"100vw", left:"50%", marginLeft:"-50vw",
             }}
           >
             {/* 写真の上のグラデーション：明転直後は写真をはっきり見せ、
