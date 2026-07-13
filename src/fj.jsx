@@ -684,7 +684,10 @@ export default function App() {
       ["margin-left", "0"], ["margin-right", "0"],
       ["padding-left", "0"], ["padding-right", "0"],
     ];
-    let el = appRootRef.current && appRootRef.current.parentElement;
+    // ルート自身も含めて矯正する：祖先のどれかが display:flex/grid の中央寄せだと、
+    // ルートdivが shrink-to-fit 幅（内容依存＝端末幅によって出たり出なかったりする）
+    // になり、狭い端末でだけ左右に地色の隙間が生じうる。width:100% を自身に立てて防ぐ。
+    let el = appRootRef.current;
     while (el) {
       for (const [k, v] of props) el.style.setProperty(k, v, "important");
       if (el === document.body) {
@@ -694,6 +697,11 @@ export default function App() {
       if (el === document.documentElement) break;
       el = el.parentElement;
     }
+    // はみ出た要素が1つでもあると、iOS Safariはレイアウトビューポートを
+    // 内容幅まで広げることがあり、全幅(100%)セクションと画面端の間に
+    // 帯が見える。html/bodyで横方向を刈り込んで根元から防ぐ。
+    document.documentElement.style.setProperty("overflow-x", "clip", "important");
+    document.body.style.setProperty("overflow-x", "clip", "important");
   }, []);
 
   // ── styles ──
