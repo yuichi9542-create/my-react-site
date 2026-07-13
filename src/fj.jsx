@@ -360,6 +360,7 @@ export default function App() {
   // ナビ下辺の読書進捗ライン（再レンダーを避けるためDOMを直接更新）
   // ※ gatePhaseの宣言より後に置くこと（前に置くと初期化前アクセスでクラッシュする）
   const progressBarRef = useRef(null);
+  const appRootRef = useRef(null);
 
   // 開発者用の隠しコマンド：フッターの「with love — 7.18.2026」を2秒以内の連打で
   // 7回タップすると、あとがきの発動条件をトグルできる（挙動確認用・見た目の手がかりなし）
@@ -671,6 +672,30 @@ export default function App() {
     document.body.classList.toggle("amn-no-scrollbar", hide);
   }, [revealPhase]);
 
+  // ── ホスト環境の幅矯正 ──
+  // ヒーロー等の全幅セクションの左右に地色の隙間が出る事象への恒久対策。
+  // 原因はホスト側CSS（Vite雛形の #root { max-width; padding } 等）が
+  // アプリの祖先を狭めること。<style>のリセットはマウント先のid違いや
+  // 読み込み順で負けうるため、実DOMの祖先を辿り「インライン + !important」
+  // （どのスタイルシートの !important よりも強い）で全幅に矯正する。
+  useEffect(() => {
+    const props = [
+      ["max-width", "none"], ["width", "100%"],
+      ["margin-left", "0"], ["margin-right", "0"],
+      ["padding-left", "0"], ["padding-right", "0"],
+    ];
+    let el = appRootRef.current && appRootRef.current.parentElement;
+    while (el) {
+      for (const [k, v] of props) el.style.setProperty(k, v, "important");
+      if (el === document.body) {
+        // Vite雛形の body { display:flex; place-items:center } による中央寄せを解除
+        el.style.setProperty("display", "block", "important");
+      }
+      if (el === document.documentElement) break;
+      el = el.parentElement;
+    }
+  }, []);
+
   // ── styles ──
   const s = {
     root: {
@@ -798,7 +823,7 @@ export default function App() {
   };
 
   return (
-    <div style={s.root}>
+    <div ref={appRootRef} style={s.root}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;700;800&family=Zen+Kaku+Gothic+New:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Klee+One:wght@400;600&display=swap');
 
@@ -1432,10 +1457,6 @@ export default function App() {
               padding:"56px 24px 36px",
               display:"flex", flexDirection:"column", justifyContent:"space-between",
               textAlign:"center", position:"relative", overflow:"hidden",
-              // フルブリード：ホスト側CSS（index.css等）が祖先に padding / max-width を
-              // 差し込んでいても、背景写真が必ず画面の左右端まで届くようにする。
-              // 親がすでに全幅なら 50% と -50vw が相殺され、位置は変わらない。
-              width:"100vw", left:"50%", marginLeft:"-50vw",
             }}
           >
             {/* 写真の上のグラデーション：明転直後は写真をはっきり見せ、
