@@ -44,7 +44,7 @@ const HOLD_ARC_START_MS = 5000;  // ここから「予感」= 金の弧が描か
 const HOLD_FEEDBACK_START_MS = 2000; // ここまでは見た目を一切変えない（バレ防止）
 
 // 公開日時：日本時間 2026年7月18日(土) 10:00（タイムゾーンはオフセットで固定）
-const COUNTDOWN_TARGET = new Date("2026-07-18T10:00:00+09:00").getTime();
+const COUNTDOWN_TARGET = new Date("2026-07-10T10:00:00+09:00").getTime();
 
 // ── 明転の鐘 ── リビールの明転にあわせて一度だけ鳴る、おりん風の合成音。
 // 音源ファイル不要（Web Audioでその場で合成）。とても小さな音量で、
