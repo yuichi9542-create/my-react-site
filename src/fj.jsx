@@ -683,6 +683,10 @@ export default function App() {
       ["max-width", "none"], ["width", "100%"],
       ["margin-left", "0"], ["margin-right", "0"],
       ["padding-left", "0"], ["padding-right", "0"],
+      // 実機iPhoneで、描画領域の左右にちょうど1pxの薄グレーの縦線が
+      // 全高にわたり現れる事象への対策。祖先の border / outline が原因の場合、
+      // border-box では内容が左右1pxずつ痩せ、線自体も地色として見える。
+      ["border", "0 none"], ["outline", "none"], ["box-shadow", "none"],
     ];
     // ルート自身も含めて矯正する：祖先のどれかが display:flex/grid の中央寄せだと、
     // ルートdivが shrink-to-fit 幅（内容依存＝端末幅によって出たり出なかったりする）
