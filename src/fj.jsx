@@ -1609,8 +1609,8 @@ export default function App() {
                         background:C.amanLine,
                       }}/>
                     )}
-                    {/* 「いま」の点は他よりひとまわり大きく（8→10px・中心は縦線に揃えたまま）、
-                        「— いま」の文字と同じ呼吸（amanNowGlow）で優しく明滅する */}
+                    {/* 進行中の点は他よりひとまわり大きく（8→10px・中心は縦線に揃えたまま）、
+                        amanNowGlow（2.4秒）で優しく明滅する。「いま」を示すのはこの点だけ */}
                     <div style={{
                       position:"absolute",
                       left: isNow ? -32.5 : -31.5,
@@ -1626,15 +1626,6 @@ export default function App() {
                     }}/>
                     <p style={{ fontFamily:"'Cormorant Garamond',serif", letterSpacing:"0.26em", fontSize:12.5, color:C.amanAccent, marginBottom:4 }}>
                       {step.time}
-                      {isNow && (
-                        <span style={{
-                          fontFamily:"'Shippori Mincho',serif", fontSize:10.5, letterSpacing:"0.24em",
-                          color:C.gold, marginLeft:10,
-                          animation:"amanNowGlow 2.4s ease-in-out infinite",
-                        }}>
-                          — いま
-                        </span>
-                      )}
                     </p>
                     {step.amenity !== undefined ? (
                       <p
